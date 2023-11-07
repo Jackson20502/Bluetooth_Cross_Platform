@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:async';
 
 void main() {
   runApp(MyApp());
@@ -29,6 +32,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   FlutterBluePlus flutterBlue = FlutterBluePlus.instance;
   List<ScanResult> scanResultList = [];
+  Timer? _timer;
   var scan_mode = 0;
   bool isScanning = false;
 
@@ -45,8 +49,12 @@ class _MyHomePageState extends State<MyHomePage> {
       flutterBlue.startScan(
           scanMode: ScanMode(scan_mode), allowDuplicates: true);
       scan();
+      _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+        _sendRssiData();
+      });
     } else {
       flutterBlue.stopScan();
+      _timer?.cancel(); // cancel the timer if it exists
     }
     setState(() {});
   }
@@ -71,7 +79,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void scan() async {
     if (isScanning) {
       // Listen to scan results
-
       flutterBlue.scanResults.listen((results) {
         // do something with scan results
 
@@ -80,6 +87,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
         // Sort the list by RSSI in descending order
         _sortScanResultsByRssi();
+
+        // // Send RSSI data to local host
+        // _sendRssiData();
 
         // update state
         setState(() {});
@@ -94,7 +104,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /* device MAC address  */
   Widget deviceMacAddress(ScanResult r) {
-    return Text(r.device.id.id);
+    // return Text(r.device.id.id);
+    return Text(r.advertisementData.serviceUuids.toString());
   }
 
   /* device name  */
@@ -140,6 +151,28 @@ class _MyHomePageState extends State<MyHomePage> {
       subtitle: deviceMacAddress(r),
       trailing: deviceSignal(r),
     );
+  }
+
+  /* Send RSSI data to local host */
+  void _sendRssiData() async {
+    // Create a list of RSSI values
+    List<int> rssiList = [];
+    for (ScanResult result in scanResultList) {
+      rssiList.add(result.rssi);
+    }
+
+    // Convert the list to a JSON string
+    String rssiJson = jsonEncode({'rssi': rssiList});
+
+    // Send the JSON string to the local host
+    var response = await http.post(
+      Uri.parse('http://10.0.0.231:8000'),
+      headers: {'Content-Type': 'application/json'},
+      body: rssiJson,
+    );
+
+    //Print the response status code
+    print('Response status code: ${response.statusCode}');
   }
 
   /* UI */
