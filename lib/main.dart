@@ -3,6 +3,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import 'dart:ui';
 
 void main() {
   runApp(MyApp());
@@ -11,7 +12,7 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  final title = 'Flutter BLE Scan Demo';
+  final title = 'Find Your Spot';
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -59,9 +60,9 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
-  /* 
+  /*
   Scan Mode
-  Ts = scan interval 
+  Ts = scan interval
   Ds = duration of every scan window
              | Ts [s] | Ds [s]
   LowPower   | 5.120  | 1.024
@@ -104,7 +105,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /* device MAC address  */
   Widget deviceMacAddress(ScanResult r) {
-    // return Text(r.device.id.id);
+    return Text(r.device.id.id);
+  }
+
+  /* device UUID address  */
+  Widget deviceUUID(ScanResult r) {
     return Text(r.advertisementData.serviceUuids.toString());
   }
 
@@ -155,18 +160,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /* Send RSSI data to local host */
   void _sendRssiData() async {
-    // Create a list of RSSI values
-    List<int> rssiList = [];
-    for (ScanResult result in scanResultList) {
-      rssiList.add(result.rssi);
+    // Create a list of RSSI values and UUIDs
+    var rssi_uuid_List = <Map<String, dynamic>>[];
+    for (var result in scanResultList) {
+      rssi_uuid_List.add({
+        'rssi': result.rssi,
+        'uuid': result.advertisementData.serviceUuids.toString(),
+      });
     }
 
     // Convert the list to a JSON string
-    String rssiJson = jsonEncode({'rssi': rssiList});
+    var rssiJson = jsonEncode(rssi_uuid_List);
 
     // Send the JSON string to the local host
     var response = await http.post(
-      Uri.parse('http://10.0.0.231:8000'),
+      Uri.parse('http://10.0.0.231:8000/rssi_uuid_data'),
       headers: {'Content-Type': 'application/json'},
       body: rssiJson,
     );
@@ -200,3 +208,111 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+
+// void main() => runApp(MyApp());
+
+// class MyApp extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Flutter Custom Painter',
+//       theme: ThemeData(
+//         primarySwatch: Colors.blue,
+//       ),
+//       home: MyPainter(),
+//     );
+//   }
+// }
+
+// class NavigatePage extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Flutter Custom Painter',
+//       theme: ThemeData(
+//         primarySwatch: Colors.blue,
+//       ),
+//       home: MyPainter(),
+//     );
+//   }
+// }
+
+// class MyPainter extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Find Your Spot'),
+//       ),
+//       body: CustomPaint(
+//         painter: ShapePainter(),
+//         child: Container(),
+//       ),
+//     );
+//   }
+// }
+
+// class ShapePainter extends CustomPainter {
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     var paint = Paint()
+//       ..color = Colors.teal
+//       ..strokeWidth = 3
+//       ..strokeCap = StrokeCap.round;
+
+//     var startingPoint1 = Offset(0, 0); //(0, size.height / 2)
+//     var endingPoint1 = Offset(size.width, 0); //size.height / 2
+//     var startingPoint2 = Offset(0, 0);
+//     var endingPoint2 = Offset(size.width, 0);
+//     var startingPoint3 = Offset(0, 0);
+//     var endingPoint3 = Offset(size.width, 0);
+//     var startingPoint4 = Offset(0, 0);
+//     var endingPoint4 = Offset(size.width, 0);
+
+//     var startingPoint5 = Offset(0, 0);
+//     var endingPoint5 = Offset(size.width, 0);
+//     var startingPoint6 = Offset(0, 0);
+//     var endingPoint6 = Offset(size.width, 0);
+//     var startingPoint7 = Offset(0, 0);
+//     var endingPoint7 = Offset(size.width, 0);
+//     var startingPoint8 = Offset(0, 0);
+//     var endingPoint8 = Offset(size.width, 0);
+//     // print(size);
+
+//     for (var i = 0; i < size.height-60; i += 20) {
+//       startingPoint1 = Offset(0, i.toDouble());
+//       endingPoint1 = Offset(30, i.toDouble());
+//       canvas.drawLine(startingPoint1, endingPoint1, paint);
+//       startingPoint2 = Offset(80, i.toDouble());
+//       endingPoint2 = Offset(140, i.toDouble());
+//       canvas.drawLine(startingPoint2, endingPoint2, paint);
+//       startingPoint3 = Offset(190, i.toDouble());
+//       endingPoint3 = Offset(250, i.toDouble());
+//       canvas.drawLine(startingPoint3, endingPoint3, paint);
+//       startingPoint4 = Offset(300, i.toDouble());
+//       endingPoint4 = Offset(330, i.toDouble());
+//       canvas.drawLine(startingPoint4, endingPoint4, paint);
+//     }
+
+//     startingPoint5 = Offset(0, 0);
+//     endingPoint5 = Offset(0, 600);
+//     canvas.drawLine(startingPoint5, endingPoint5, paint);
+//     startingPoint6 = Offset(110, 0);
+//     endingPoint6 = Offset(110, 600);
+//     canvas.drawLine(startingPoint6, endingPoint6, paint);
+//     startingPoint7 = Offset(220, 0);
+//     endingPoint7 = Offset(220, 600);
+//     canvas.drawLine(startingPoint7, endingPoint7, paint);
+//     startingPoint8 = Offset(330, 0);
+//     endingPoint8 = Offset(330, 600);
+//     canvas.drawLine(startingPoint8, endingPoint8, paint);
+
+
+//     // canvas.drawLine(startingPoint, endingPoint, paint);
+//   }
+
+//   @override
+//   bool shouldRepaint(CustomPainter oldDelegate) {
+//     return false;
+//   }
+// }
